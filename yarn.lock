@@ -47,6 +47,11 @@
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.4.tgz#0b92dcc0cc1c81f6f306a381f28e31b1a56536e9"
   integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
 
+"@types/epub-gen@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@types/epub-gen/-/epub-gen-0.1.2.tgz#e7a68b27b6346df2f94ae0bed07e7d3dcd8aeba3"
+  integrity sha512-uB145eBAhOMsBvEVwyWSgpB3WKLgp1joMS0PjbZtLHyeqEg84K8EG1RnOZhmWD598i4mEAnN3SHyZKU9aWBsmA==
+
 "@types/node@*":
   version "22.13.1"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.13.1.tgz#a2a3fefbdeb7ba6b89f40371842162fac0934f33"

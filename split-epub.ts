@@ -1,50 +1,56 @@
-const fs = require("fs-extra");
-const path = require("path");
-const EPub = require("epub2").EPub;
-const EpubGen = require("epub-gen");
+import { EPub } from "epub2";
+import EpubGen from "epub-gen";
 
-const FILE_SIZE_LIMIT = 1 * 1024 * 1024; // 1MB limit (Adjust as needed)
-const INPUT_FILE = "../Worth The Candle.epub"; // Change this to your input EPUB file
+const FILE_SIZE_LIMIT: number = 1 * 1024 * 1024; // 1MB limit (Adjust as needed)
+const INPUT_FILE: string = "../Worth The Candle.epub"; // Change this to your input EPUB file
+
+interface Chapter {
+  title: string;
+  content: string;
+}
 
 // Helper function to promisify getChapterRaw
-function getChapterContent(epub, chapterId) {
+function getChapterContent(epub: EPub, chapterId: string): Promise<string> {
   return new Promise((resolve, reject) => {
     epub.getChapterRaw(chapterId, (err, text) => {
       if (err) {
         reject(err);
       } else {
         // Strip out image tags (basic regex, may not catch all cases)
-        const cleanText = text.replace(/<img[^>]*>/g, "");
+        const cleanText: string = text?.replace(/<img[^>]*>/g, "") ?? "";
+
         resolve(cleanText);
       }
     });
   });
 }
 
-async function splitEpub(filePath) {
+async function splitEpub(filePath: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const epub = new EPub(filePath);
+    const epub: EPub = new EPub(filePath);
 
     epub.on("end", async () => {
-      const bookTitle = epub.metadata.title
-        .replace(/[^a-zA-Z0-9 ]/g, "")
-        .trim(); // Clean title
+      const bookTitle: string = epub?.metadata?.title
+        ? epub.metadata.title.replace(/[^a-zA-Z0-9 ]/g, "").trim() // Clean title
+        : "Book Title";
 
       // Normalize TOC mappings by decoding the keys
-      const chapterTitles = {};
+      const chapterTitles: Record<string, string> = {};
       epub.toc.forEach((entry) => {
-        const decodedHref = decodeURIComponent(entry.href); // Fix encoded spaces (%20) and other characters
+        if (!entry.href || !entry.title) return;
+
+        const decodedHref: string = decodeURIComponent(entry.href); // Fix encoded spaces (%20) and other characters
         chapterTitles[decodedHref] = entry.title;
       });
 
-      let currentSize = 0;
-      let currentPart = [];
-      let partNumber = 1;
+      let currentSize: number = 0;
+      let currentPart: Chapter[] = [];
+      let partNumber: number = 1;
 
-      const savePart = async () => {
+      const savePart = async (): Promise<void> => {
         if (currentPart.length === 0) return;
 
-        const outputFileName = `${bookTitle} - Part ${partNumber}.epub`;
+        const outputFileName: string = `${bookTitle} - Part ${partNumber}.epub`;
         console.log(`Saving: ${outputFileName}`);
 
         // Generate EPUB for this chunk
@@ -66,6 +72,11 @@ async function splitEpub(filePath) {
 
       for (const ch of epub.flow) {
         try {
+          if (!ch.id || !ch.href) {
+            console.warn("Skipping invalid chapter:", ch);
+            continue;
+          }
+
           // Skip images or non-text files
           if (
             ch.href.endsWith(".jpg") ||
@@ -76,16 +87,20 @@ async function splitEpub(filePath) {
             continue;
           }
 
-          const content = await getChapterContent(epub, ch.id);
+          const content: string = await getChapterContent(epub, ch.id);
 
           // Normalize the href for lookup
-          const normalizedHref = decodeURIComponent(ch.href);
+          const normalizedHref: string = decodeURIComponent(ch.href);
 
           // Get the actual title from the TOC mapping, fallback to default
-          const title = chapterTitles[normalizedHref] || ch.title || "Untitled";
+          const title: string =
+            chapterTitles[normalizedHref] || ch.title || "Untitled";
 
-          const chapter = { title, content };
-          const chapterSize = Buffer.byteLength(chapter.content, "utf-8");
+          const chapter: Chapter = { title, content };
+          const chapterSize: number = Buffer.byteLength(
+            chapter.content,
+            "utf-8"
+          );
 
           // If adding this chapter exceeds the file size limit, save the current part and start a new one
           if (currentSize + chapterSize > FILE_SIZE_LIMIT) {
