@@ -1,8 +1,28 @@
 import { EPub } from "epub2";
 import EpubGen from "epub-gen";
+import fs from "fs-extra";
+import path from "path";
 
 const FILE_SIZE_LIMIT: number = 1 * 1024 * 1024; // 1MB limit (Adjust as needed)
-const INPUT_FILE: string = "../Worth The Candle.epub"; // Change this to your input EPUB file
+
+// Get the input file from the command line arguments
+const args = process.argv;
+const INPUT_FILE: string = args[args.length - 1];
+
+if (!INPUT_FILE || !INPUT_FILE.endsWith(".epub")) {
+  console.error("Please provide a valid EPUB file as the last argument.");
+  process.exit(1);
+}
+
+const inputDir = path.dirname(INPUT_FILE);
+const fileName = path.basename(INPUT_FILE, ".epub");
+const outputDir = path.join(inputDir, `${fileName} - Split`);
+
+// Ensure output directory is clean
+if (fs.existsSync(outputDir)) {
+  fs.removeSync(outputDir);
+}
+fs.mkdirSync(outputDir);
 
 interface Chapter {
   title: string;
@@ -18,7 +38,6 @@ function getChapterContent(epub: EPub, chapterId: string): Promise<string> {
       } else {
         // Strip out image tags (basic regex, may not catch all cases)
         const cleanText: string = text?.replace(/<img[^>]*>/g, "") ?? "";
-
         resolve(cleanText);
       }
     });
@@ -50,7 +69,10 @@ async function splitEpub(filePath: string): Promise<void> {
       const savePart = async (): Promise<void> => {
         if (currentPart.length === 0) return;
 
-        const outputFileName: string = `${bookTitle} - Part ${partNumber}.epub`;
+        const outputFileName: string = path.join(
+          outputDir,
+          `${bookTitle} - Part ${partNumber}.epub`
+        );
         console.log(`Saving: ${outputFileName}`);
 
         // Generate EPUB for this chunk
