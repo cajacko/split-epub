@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "epub-gen": "^0.1.0",
+    "epub-parser": "^0.2.5",
+    "epub2": "^3.0.2",
+    "fs-extra": "^11.3.0",
+    "path": "^0.12.7"
+  }
+}
