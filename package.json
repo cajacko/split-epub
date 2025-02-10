@@ -1,9 +1,14 @@
 {
+  "scripts": {
+    "start": "ts-node split-epub.ts"
+  },
   "dependencies": {
     "epub-gen": "^0.1.0",
     "epub-parser": "^0.2.5",
     "epub2": "^3.0.2",
     "fs-extra": "^11.3.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }
